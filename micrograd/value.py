@@ -2,7 +2,6 @@ import numpy as np
 import math
 
 class Value:
-    """ Hello my name is Anh Duc"""
     def __init__(self, val, _children=(), _op = '', label = ''):
         self.val = val
         self.grad = 0
@@ -12,14 +11,12 @@ class Value:
         self._backward = lambda: None
 
     def __repr__(self):
-        #This is a commnent
         return f"Value(val = {self.val})"
 
     def __add__(self, other):
         other = other if isinstance(other, Value) else Value(other)
         out = self.val + other.val
         obj = Value(out, _children=(self, other), _op='+')
-        #This is alsoooooooooooooo a commnent
 
         def _backward():
             self.grad += obj.grad * 1.0
@@ -76,9 +73,7 @@ class Value:
         obj._backward = _backward
         return obj
 
-
     def tanh(self):
-
         x = self.val
         out = (math.exp(2 * x) - 1) / (math.exp(2 * x) + 1)
         obj = Value(out, _children=(self,), _op="tanh")
@@ -89,6 +84,43 @@ class Value:
         obj._backward = _backward
         return obj
 
+    def relu(self):
+        x = self.val
+        out = x if x > 0 else 0
+        obj = Value(out, _children=(self,), _op="relu")
+
+        def _backward():
+            if self.val > 0:
+                self.grad += obj.grad * 1.0
+            else:
+                self.grad += obj.grad * 0.0
+
+        obj._backward = _backward
+        return obj
+
+    def leaky_relu(self):
+        x = self.val
+        out = x if x > 0 else 0.01 * x
+        obj = Value(out, _children=(self,), _op="leaky_relu")
+
+        def _backward():
+            if self.val > 0:
+                self.grad += obj.grad * 1.0
+            else:
+                self.grad += obj.grad * 0.01
+
+        obj._backward = _backward
+        return obj
+
+    def sigmoid(self):
+        out = 1 / (1 + math.exp(-self.val))
+        obj = Value(out, _children=(self, ), _op="sigmoid")
+
+        def _backward():
+            self.grad += obj.val * (1 - obj.val) * obj.grad
+
+        obj._backward = _backward
+        return obj
 
     def backward(self):
         self.grad = 1.0
